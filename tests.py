@@ -1,6 +1,6 @@
 import unittest
 from tinydb.table import Table
-from db import Tournament, Player, Match, Round
+from models import Tournament, Player, Match, Round
 
 
 class BaseModelTest(unittest.TestCase):
