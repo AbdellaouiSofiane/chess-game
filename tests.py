@@ -222,7 +222,12 @@ class TournamentModelTest(RoundModelTest):
         self.tournament.enroll_player(self.player_d)
         self.assertTrue(self.tournament.ready)
 
+    def test_generate_next_round_with_no_enrolled_player(self):
+        self.tournament.generate_next_round()
+        self.assertEqual(len(self.tournament.rounds), 0)
+
     def test_generate_next_round(self):
+
         self.tournament.enroll_player(self.player_a)
         self.tournament.enroll_player(self.player_b)
         self.tournament.enroll_player(self.player_c)
@@ -230,27 +235,29 @@ class TournamentModelTest(RoundModelTest):
 
         self.tournament.generate_next_round()
         self.assertEqual(len(self.tournament.rounds), 1)
-        self.assertEqual(self.tournament.rounds[0], self.first_round)
         self.assertIn(
-            Match(self.player_d, self.player_b),
+            Match(self.player_b, self.player_d),
             self.tournament.rounds[0].matchs
         )
         self.assertIn(
-            Match(self.player_c, self.player_a),
+            Match(self.player_a, self.player_c),
             self.tournament.rounds[0].matchs
         )
 
         self.tournament.rounds[0].matchs[0].score_player_1 = 1
         self.tournament.rounds[0].matchs[1].score_player_2 = 1
-
         self.tournament.generate_next_round()
-        self.assertEqual(len(self.tournament.rounds), 2)
-        self.assertEqual(self.tournament.rounds[1], self.second_round)
-        self.assertEqual(
-            Match(self.player_d, self.player_a),
-            self.tournament.rounds[1].matchs[0]
-        )
 
+        self.assertEqual(len(self.tournament.rounds), 2)
+        self.assertIn(
+            Match(self.player_a, self.player_d),
+            self.tournament.rounds[1].matchs
+        )
+        self.assertIn(
+            Match(self.player_b, self.player_c),
+            self.tournament.rounds[1].matchs
+        )
+        self.tournament.generate_next_round()
 
 
 if __name__ == '__main__':

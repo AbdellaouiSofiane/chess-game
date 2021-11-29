@@ -25,34 +25,38 @@ class Match(BaseModel):
 
     def __str__(self):
         if self.is_finished:
-            return f"{self.player_1}:{self.score_player_1} VS {self.player_2}:{self.score_player_2}"
+            return f"{self.player_1}:{self.score_player_1} VS "\
+                   f"{self.player_2}:{self.score_player_2}"
         else:
             return f"{self.player_1} VS {self.player_2}"
 
     @property
     def is_finished(self):
+        """ Return a boolean that indicate if the score has been
+            settled for this match.
+        """
         if self.score_player_1 + self.score_player_2 == 1:
             return True
         return False
 
     def set_score(self, winner=None):
+        """ Set score to 1 for winning player or 0.5 for both
+            players if draw.
+        """
         if winner == self.player_1:
-            self.score_player_1 = 1
-            self.score_player_2 = 0
+            self.score_player_1, self.score_player_2 = 1, 0
         elif winner == self.player_2:
-            self.score_player_1 = 0
-            self.score_player_2 = 1
+            self.score_player_1, self.score_player_2 = 0, 1
         else:
-            self.score_player_1 = 0.5
-            self.score_player_2 = 0.5
+            self.score_player_1, self.score_player_2 = 0.5, 0.5
 
     def get_score(self, player):
+        """ Return the player's score for this match."""
         if player == self.player_1:
             return self.score_player_1
         elif player == self.player_2:
             return self.score_player_2
-        else:
-            raise Exception(f"{player} didn't participate in this match")
+        return 0
 
 
 @dataclass
@@ -65,6 +69,9 @@ class Round(BaseModel):
 
     @property
     def is_finished(self):
+        """ Return a boolean that indicate if all matchs have been
+            settled for this round.
+        """
         if self.matchs and all(match.is_finished for match in self.matchs) :
             return True
         return False
@@ -82,8 +89,8 @@ class Tournament(BaseModel):
 
     @property
     def ready(self):
-        """ A boolean that indicate wether enough players have joined the
-            tournament for it to start.
+        """ Return a boolean that indicate wether all players
+            have joined the tournament.
         """
         if len(self.players) == self.nb_rounds * 2:
             return True
@@ -91,6 +98,9 @@ class Tournament(BaseModel):
 
     @property
     def is_finished(self):
+        """ Return a boolean that indicate if all rounds has been
+            settled for this tournament.
+        """
         if (
             len(self.rounds) == self.nb_rounds and
             all(round.is_finished for round in self.rounds)
@@ -99,6 +109,7 @@ class Tournament(BaseModel):
         return False
 
     def enroll_player(self, player):
+        """ Add a new player to tournament."""
         if (
             player.id not in self.players and
             not self.ready
@@ -107,31 +118,39 @@ class Tournament(BaseModel):
             self.save()
 
     def total_score(self, player):
-        score = 0
-        for round in self.rounds:
-            for match in round.matchs:
-                if player in [match.player_1, match.player_2]:
-                    score += match.get_score(player)
-        return score
+        """ Return the cumulated score of a given player troughout
+            the tournament.
+        """
+        return sum(
+            match.get_score(player)
+            for round in self.rounds
+            for match in round.matchs
+        )
 
     def generate_next_round(self):
-        if self.ready and not self.is_finished:
-            players = [Player.get(player) for player in self.players]
+        """ Generate a new round and match players together."""
+        players = sorted(
+            [Player.get(player) for player in self.players],
+            key=lambda x: (self.total_score(x), -x.rank),
+            reverse=True
+        )
 
-            if not self.rounds:
-                players.sort(key=lambda x: x.rank, reverse=True)
-                round = Round(index=1)
-                for i in range(self.nb_rounds):
-                    round.matchs.append(Match(players[i], players[i+self.nb_rounds]))
-                self.rounds.append(round)
-                self.save()
-            elif self.rounds[-1].is_finished and len(self.rounds) < self.nb_rounds:
-                players.sort(key=lambda x: (self.total_score(x), x.rank), reverse=True)
-                round = Round(index=len(self.rounds) + 1)
-                for i in range(self.nb_rounds - round.index):
-                    round.matchs.append(Match(players[i], players[i+1]))
-                else:
-                    if round.index == self.nb_rounds:
-                        round.matchs.append(Match(players[0], players[1]))
-                self.rounds.append(round)
-                self.save()
+        if self.ready and not self.rounds:
+            match_list = [
+                Match(players[i], players[i + self.nb_rounds])
+                for i in range(self.nb_rounds)
+            ]
+        elif (self.ready and
+              self.rounds[-1].is_finished and
+              len(self.rounds) < self.nb_rounds):
+            match_list = [
+                Match(players[i * 2], players[i * 2 + 1])
+                for i in range(self.nb_rounds)
+            ]
+        else:
+            return
+
+        self.rounds.append(
+            Round(index=len(self.rounds)+1, matchs=match_list)
+        )
+        self.save()
