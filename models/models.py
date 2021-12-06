@@ -13,22 +13,22 @@ class Player(BaseModel):
     rank: int
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.first_name} {self.last_name} (rank {self.rank})"
 
 
 @dataclass
 class Match(BaseModel):
-    player_1: Player
-    player_2: Player
+    player_1: int
+    player_2: int
     score_player_1: float = 0
     score_player_2: float = 0
 
     def __str__(self):
         if self.is_finished:
-            return f"{self.player_1}:{self.score_player_1} VS "\
-                   f"{self.player_2}:{self.score_player_2}"
+            return f"{Player.get(self.player_1)}:{self.score_player_1} VS "\
+                   f"{Player.get(self.player_2)}:{self.score_player_2}"
         else:
-            return f"{self.player_1} VS {self.player_2}"
+            return f"{Player.get(self.player_1)} VS {Player.get(self.player_2)}"
 
     @property
     def is_finished(self):
@@ -43,6 +43,8 @@ class Match(BaseModel):
         """ Set score to 1 for winning player or 0.5 for both
             players if draw.
         """
+        if isinstance(winner, Player):
+            winner = winner.id
         if winner == self.player_1:
             self.score_player_1, self.score_player_2 = 1, 0
         elif winner == self.player_2:
@@ -52,6 +54,8 @@ class Match(BaseModel):
 
     def get_score(self, player):
         """ Return the player's score for this match."""
+        if isinstance(player, Player):
+            player = player.id
         if player == self.player_1:
             return self.score_player_1
         elif player == self.player_2:
@@ -110,11 +114,13 @@ class Tournament(BaseModel):
 
     def enroll_player(self, player):
         """ Add a new player to tournament."""
+        if isinstance(player, Player):
+            player = player.id
         if (
-            player.id not in self.players and
+            player not in self.players and
             not self.ready
         ):
-            self.players.append(player.id)
+            self.players.append(player)
             self.save()
 
     def total_score(self, player):
@@ -130,8 +136,8 @@ class Tournament(BaseModel):
     def generate_next_round(self):
         """ Generate a new round and match players together."""
         players = sorted(
-            [Player.get(player) for player in self.players],
-            key=lambda x: (self.total_score(x), -x.rank),
+            [player for player in self.players],
+            key=lambda x: (self.total_score(x), -Player.get(x).rank),
             reverse=True
         )
 

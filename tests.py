@@ -90,25 +90,25 @@ class MatchModelTest(unittest.TestCase):
         self.db_table.truncate()
 
     def test_representation_match_not_finished(self):
-        match = Match(self.player_a, self.player_b)
+        match = Match(self.player_a.id, self.player_b.id)
         self.assertFalse(match.is_finished)
         self.assertEqual(str(match), "Chuck Nourris VS Harry Potter")
 
     def test_representation_match_finished(self):
-        match = Match(self.player_a, self.player_b)
+        match = Match(self.player_a.id, self.player_b.id)
         match.score_player_1 = 1
         self.assertTrue(match.is_finished)
         self.assertEqual(str(match), "Chuck Nourris:1 VS Harry Potter:0")
 
     def test_representation_match_finished_with_draw(self):
-        match = Match(self.player_a, self.player_b)
+        match = Match(self.player_a.id, self.player_b.id)
         match.score_player_1 = 0.5
         match.score_player_2 = 0.5
         self.assertTrue(match.is_finished)
         self.assertEqual(str(match), "Chuck Nourris:0.5 VS Harry Potter:0.5")
 
     def test_set_score_with_winner(self):
-        match = Match(self.player_a, self.player_b)
+        match = Match(self.player_a.id, self.player_b.id)
         match.set_score(winner=self.player_a)
         self.assertEqual(match.score_player_1, 1)
         self.assertEqual(match.score_player_2, 0)
@@ -116,7 +116,7 @@ class MatchModelTest(unittest.TestCase):
         self.assertEqual(match.get_score(self.player_b), 0)
 
     def test_set_score_draw(self):
-        match = Match(self.player_a, self.player_b)
+        match = Match(self.player_a.id, self.player_b.id)
         match.set_score()
         self.assertEqual(match.score_player_1, 0.5)
         self.assertEqual(match.score_player_2, 0.5)
@@ -137,8 +137,8 @@ class RoundModelTest(MatchModelTest):
             self.player_c.save()
             self.player_d.save()
 
-            self.first_match = Match(self.player_d, self.player_b)
-            self.second_match = Match(self.player_c, self.player_a)
+            self.first_match = Match(self.player_d.id, self.player_b.id)
+            self.second_match = Match(self.player_c.id, self.player_a.id)
 
         def tearDown(self):
             super().tearDown()
@@ -236,11 +236,11 @@ class TournamentModelTest(RoundModelTest):
         self.tournament.generate_next_round()
         self.assertEqual(len(self.tournament.rounds), 1)
         self.assertIn(
-            Match(self.player_b, self.player_d),
+            Match(self.player_b.id, self.player_d.id),
             self.tournament.rounds[0].matchs
         )
         self.assertIn(
-            Match(self.player_a, self.player_c),
+            Match(self.player_a.id, self.player_c.id),
             self.tournament.rounds[0].matchs
         )
 
@@ -250,11 +250,11 @@ class TournamentModelTest(RoundModelTest):
 
         self.assertEqual(len(self.tournament.rounds), 2)
         self.assertIn(
-            Match(self.player_a, self.player_d),
+            Match(self.player_a.id, self.player_d.id),
             self.tournament.rounds[1].matchs
         )
         self.assertIn(
-            Match(self.player_b, self.player_c),
+            Match(self.player_b.id, self.player_c.id),
             self.tournament.rounds[1].matchs
         )
         self.tournament.generate_next_round()
