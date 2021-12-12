@@ -1,5 +1,5 @@
-from controlers.app import AppManager
-from views.app import AppView
+from controllers import AppManager
+from views import AppView
 
 
 GREETING_MESSAGE = """
