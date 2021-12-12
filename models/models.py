@@ -160,3 +160,14 @@ class Tournament(BaseModel):
             Round(index=len(self.rounds)+1, matchs=match_list)
         )
         self.save()
+
+    @classmethod
+    def get_unready(cls):
+        return [tournament for tournament in cls.all() if not tournament.ready]
+
+    @classmethod
+    def get_unfinished(cls):
+        return [
+            tournament for tournament in cls.all()
+            if not tournament.is_finished and tournament.ready
+        ]

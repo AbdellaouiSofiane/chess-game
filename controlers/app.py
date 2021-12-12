@@ -1,8 +1,11 @@
 import sys
 from abc import ABC
+
 from dataclass_factory import Factory
+
 from models import Player, Tournament
 from views.app import AppView, PlayerView, TournamentView
+
 
 
 class BaseManager(ABC):
@@ -13,6 +16,7 @@ class BaseManager(ABC):
 
     def start(self):
         while True:
+            self.view.clear()
             self.view.setup(self)
             self.view.start()
 
@@ -20,16 +24,12 @@ class BaseManager(ABC):
 class PlayerManager(BaseManager):
 
     def create(self):
-        first_name = self.view.get_first_name()
-        last_name = self.view.get_last_name()
-        sexe = self.view.get_sexe()
-        rank = self.view.get_rank()
         player = Factory().load(
             {
-                'first_name': first_name,
-                'last_name': last_name,
-                'sexe': sexe,
-                'rank': rank
+                'first_name': self.view.get_first_name(),
+                'last_name': self.view.get_last_name(),
+                'sexe': self.view.get_sexe(),
+                'rank': self.view.get_rank()
             },
             self.model
         )
@@ -46,49 +46,41 @@ class PlayerManager(BaseManager):
 class TournamentManager(BaseManager):
 
     def create(self):
-        name = self.view.get_name()
         tournament = Factory().load(
-            {
-                'name': name,
-            },
-            self.model
+            {'name': self.view.get_name()}, self.model
         )
         tournament.save()
 
-    def enroll_players(self):
-        pass
-        # tournaments = [
-        #     tournament for tournament
-        #     in self.model.all()
-        #     if not tournament.ready
-        # ]
-        # if not tournaments:
-        #     print('There is currently no tournament to assign players to.')
-        # elif len(tournaments) == 1:
-        #     active_tournament = tournaments[0]
-        # else:
-        #     active_tournament_id = self.view.get_active_tournament(tournaments)
-        #     active_tournament = self.model.get(active_tournament_id)
+    def not_enrolled_players(self, tournament):
+        return [
+            player for player in Player.all()
+            if player.id not in tournament.players
+        ]
 
-        # not_enrolled_players =
+    def get_active_tournament(self):
+        tournaments = self.model.get_unready()
+        if tournaments and len(tournaments) == 1:
+            return tournaments[0]
+        elif tournaments and len(tournaments) > 1:
+            return self.view.get_active_tournament(tournaments)
+        return None
 
-        # while len(active_tournament.players) < active_tournament.nb_rounds * 2:
-
-        # while len(active_tournament.players) < active_tournament.nb_rounds * 2:
-        #     print('select a player from the following list')
-        #     PlayerManager(model=Player , view=PlayerView()).show_all()
-        #     player_id = input()
-        #     player = Player.get(int(player_id))
-        #     tournament.players.append(player.id)
-        #     tournament.save()
+    def enroll_player(self):
+        tournament = self.get_active_tournament()
+        if tournament:
+            players = self.not_enrolled_players(tournament)
+            if players:
+                player = self.view.get_player(players)
+                tournament.enroll_player(player)
+            else:
+                input("There's no player to enroll.")
+        else:
+            input("There's no open tournament.\n")
 
     def launch_game(self):
-        pass
-        # tournaments = [
-        #     tournament for tournament
-        #     in self.model.all()
-        #     if not tournament.is_finished
-        # ]
+        tournaments = self.model.get_unfinished()
+        tournament = self.view.get_active_tournament(tournaments)
+
         # if not tournaments:
         #     print('There is currently no tournament to launch.')
         # elif len(tournaments) == 1:
