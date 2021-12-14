@@ -1,23 +1,34 @@
+from utils import index_generator
 from .base import BaseView
 
 
 class PlayerView(BaseView):
 
     def setup(self, controller):
+        generator = index_generator()
         self.mapping = {
-            'A': {
+            generator.__next__(): {
                 'description': 'Create new player',
                 'action': controller.create
-            },
-            'B': {
-                'description': 'Display all registred players',
-                'action': controller.show_all
-            },
-            'C': {
-                'description':'Back',
-                'action': controller.back
-            },
+            }
         }
+        if controller.model.all():
+            self.mapping.update(
+                {
+                    generator.__next__(): {
+                        'description': 'Display all registred players',
+                        'action': controller.show_all
+                    }
+                }
+            )
+        self.mapping.update(
+            {
+                generator.__next__(): {
+                    'description':'Back',
+                    'action': controller.back
+                }
+            }
+        )
 
     def get_first_name(self):
         return input('Enter first name:\n =>')
@@ -44,40 +55,61 @@ class PlayerView(BaseView):
 class TournamentView(BaseView):
 
     def setup(self, controller):
+        generator = index_generator()
         self.mapping = {
-            'A': {
+            generator.__next__(): {
                 'description':'Create new tournament',
                 'action': controller.create
-            },
-            'B': {
-                'description':'Enroll player to tournament',
-                'action': controller.enroll_player
-            },
-            'C': {
-                'description':'Launch game',
-                'action': controller.launch_game
-            },
-            'D': {
-                'description':'Display all tournament',
-                'action': controller.show_all
-            },
-            'E': {
-                'description':'Back',
-                'action': controller.back
-            },
-
+            }
         }
+        if controller.model.get_unready():
+            self.mapping.update(
+                {
+                    generator.__next__(): {
+                        'description':'Enroll player to tournament',
+                        'action': controller.enroll_player
+                    }
+                }
+            )
+        if controller.model.get_unfinished():
+            self.mapping.update(
+                {
+                    generator.__next__(): {
+                        'description':'Enter results',
+                        'action': controller.enter_results
+                    }
+                }
+            )
+        if controller.model.all():
+            self.mapping.update(
+                {
+                    generator.__next__(): {
+                        'description':'Display all tournament',
+                        'action': controller.show_all
+                    }
+                }
+            )
+        self.mapping.update(
+            {
+                generator.__next__(): {
+                    'description':'Back',
+                    'action': controller.back
+                },
 
-    def get_player(self, players):
+            }
+        )
+
+    def get_player(self, players, tournament):
         if players:
-            print('Please select a player from the list below:\n')
+            print(f'Please select a player to enroll in {tournament.name}:\n')
             obj = self.get_selected_object(players)
             return obj
         else:
             print('No tournament was found:\n')
 
-    def set_score(self, players):
-        print('Please select the winner of the match:\n')
+    def set_score(self, players, tournament):
+        print(f'{tournament}')
+        print(f'Please select the winner of the match {tournament.get_active_match()}:\n')
         return self.get_selected_object(players)
 
     def get_active_tournament(self, tournaments):
@@ -104,16 +136,17 @@ class TournamentView(BaseView):
 class AppView(BaseView):
 
     def setup(self, controller):
+        generator = index_generator()
         self.mapping = {
-            'A': {
+            generator.__next__(): {
                 'description':'Manage tournaments',
                 'action': controller.lunch_tournament_manager
             },
-            'B': {
+            generator.__next__(): {
                 'description':'Manage players',
                 'action': controller.lunch_player_manager
             },
-            'C': {
+            generator.__next__(): {
                 'description':'Exit program',
                 'action': controller.exit
             }

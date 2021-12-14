@@ -4,7 +4,7 @@ from typing import List, ClassVar
 from .base import BaseModel
 
 
-@dataclass(order=True)
+@dataclass
 class Player(BaseModel):
     first_name: str
     last_name: str
@@ -77,9 +77,18 @@ class Round(BaseModel):
         """ Return a boolean that indicate if all matchs have been
             settled for this round.
         """
-        if self.matchs and all(match.is_finished for match in self.matchs) :
+        if self.matchs and all(match.is_finished for match in self.matchs):
             return True
         return False
+
+    def get_active_match(self):
+        """ Return the first match of the round which is not finished. """
+        pending_matchs = [
+            match for match in self.matchs if not match.is_finished
+        ]
+        if pending_matchs:
+            return pending_matchs[0]
+        return None
 
 
 @dataclass
@@ -90,7 +99,13 @@ class Tournament(BaseModel):
     rounds: List[Round] = field(default_factory=list)
 
     def __str__(self):
-        return f"{self.name}"
+        if not self.is_ready:
+            return f"{self.name}, status: pending, {len(self.players)}/{self.nb_rounds * 2} players."
+        elif not self.is_finished:
+            return f"{self.name}, status: started, {len(self.rounds)}/{self.nb_rounds} rounds."
+        else:
+            return f"{self.name}, status: finished."
+
 
     @property
     def is_ready(self):
@@ -109,9 +124,56 @@ class Tournament(BaseModel):
         if (
             len(self.rounds) == self.nb_rounds and
             all(round.is_finished for round in self.rounds)
-        ) :
+        ):
             return True
         return False
+
+    def get_active_round(self):
+        """ Return the active round of a tournament"""
+        if (
+            not self.rounds or
+            (
+                self.rounds[-1].is_finished and 
+                len(self.rounds) < self.nb_rounds
+            )
+        ):
+            self.generate_next_round()
+        if not self.rounds[-1].is_finished:
+            return self.rounds[-1]
+        return None
+                    
+    def get_active_match(self):
+        """ Return the active match of a tournament"""
+        active_round = self.get_active_round()
+        if active_round:
+            return active_round.get_active_match()
+        return None
+
+    def get_sorted_players(self):
+        """ return a list of players sorted by total score and by rank. """
+        return sorted(
+            [player for player in self.players],
+            key=lambda x: (self.total_score(x), - Player.get(x).rank),
+            reverse=True
+        )
+
+    def generate_next_round(self):
+        """ Generate a new round and match players together. """
+        players = self.get_sorted_players()
+        if not self.rounds:
+            match_list = [
+                Match(players[i], players[i + self.nb_rounds])
+                for i in range(self.nb_rounds)
+            ]
+        else:
+            match_list = [
+                Match(players[i * 2], players[i * 2 + 1])
+                for i in range(self.nb_rounds)
+            ]
+        self.rounds.append(
+            Round(index=len(self.rounds)+1, matchs=match_list)
+        )
+        self.save()
 
     def enroll_player(self, player):
         """ Add a new player to tournament."""
@@ -131,54 +193,6 @@ class Tournament(BaseModel):
             for round in self.rounds
             for match in round.matchs
         )
-    def get_sorted_players(self):
-        """ return a list of players sorted by total score and by rank. """
-        return sorted(
-            [player for player in self.players],
-            key=lambda x: (self.total_score(x), - Player.get(x).rank),
-            reverse=True
-        )
-
-    def generate_next_round(self):
-        """ Generate a new round and match players together. """
-        players = self.get_sorted_players()
-        if self.is_ready and not self.rounds:
-            match_list = [
-                Match(players[i], players[i + self.nb_rounds])
-                for i in range(self.nb_rounds)
-            ]
-        elif (self.is_ready and
-              self.rounds[-1].is_finished and
-              len(self.rounds) < self.nb_rounds):
-            match_list = [
-                Match(players[i * 2], players[i * 2 + 1])
-                for i in range(self.nb_rounds)
-            ]
-        else:
-            return
-
-        self.rounds.append(
-            Round(index=len(self.rounds)+1, matchs=match_list)
-        )
-        self.save()
-        return self.rounds[-1]
-
-    def get_active_round(self):
-        """ Return the active round of a tournament"""
-        for round in self.rounds:
-            if not round.is_finished:
-                return round
-        else:
-            return self.generate_next_round()
-
-    def get_active_match(self):
-        """ Return the active match of a tournament"""
-        active_round = self.get_active_round()
-        if active_round:
-            for match in active_round.matchs:
-                if not match.is_finished:
-                    return match
-        return None
 
     @classmethod
     def get_unready(cls):

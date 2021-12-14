@@ -42,55 +42,51 @@ class TournamentManager(BaseManager):
         )
         tournament.save()
 
-    def not_enrolled_players(self, tournament):
+    def not_enrolled_players(self):
         """ Return a list of registred players not yet enrolled in the
-            tournament given as arg.
+            active tournament.
         """
         return [
             player for player in Player.all()
-            if player.id not in tournament.players
+            if player.id not in self.active_tournament.players
         ]
 
-    def get_active_tournament(self, default=True):
-        if default:
-            tournaments = self.model.get_unready()
+    def set_active_tournament(self, tournaments):
+        """ set active_tournament class attribute to the tournament 
+            given as args, if multiple tournament given then ask user to
+            choose one.
+        """
+        if len(tournaments) == 1:
+            self.active_tournament = tournaments[0]
+        elif len(tournaments) > 1:
+            self.active_tournament = self.view.get_active_tournament(tournaments)
         else:
-            tournaments = self.model.get_unfinished()
-        if tournaments and len(tournaments) == 1:
-            return tournaments[0]
-        elif tournaments and len(tournaments) > 1:
-            return self.view.get_active_tournament(tournaments)
-        return None
+            self.active_tournament = None
 
     def enroll_player(self):
-        tournament = self.get_active_tournament()
-        if tournament:
-            players = self.not_enrolled_players(tournament)
+        """ Enroll a new player to the active tournament. """
+        self.set_active_tournament(self.model.get_unready())
+        if self.active_tournament:
+            players = self.not_enrolled_players()
             if players:
-                player = self.view.get_player(players)
-                tournament.enroll_player(player)
-            else:
-                input("There's no player to enroll.")
-        else:
-            input("There's no open tournament.\n")
+                player = self.view.get_player(players, self.active_tournament)
+                self.active_tournament.enroll_player(player)
 
-    def launch_game(self):
-        tournament = self.get_active_tournament(default=False)
-        if tournament:
-            active_match = tournament.get_active_match()
+    def enter_results(self):
+        self.set_active_tournament(self.model.get_unfinished())
+        if self.active_tournament:
+            active_match = self.active_tournament.get_active_match()
             if active_match:
-                self.set_score(active_match)
-                tournament.save()
-        else:
-            input("There's no open tournament.\n")
+                self.set_score(active_match, self.active_tournament)
+                self.active_tournament.save()
 
-    def set_score(self, match):
+    def set_score(self, match, tournament):
         players = [
             Player.get(match.player_1),
             Player.get(match.player_2),
             'draw'
         ]
-        winner = self.view.set_score(players)
+        winner = self.view.set_score(players, tournament)
         if winner == 'draw':
             match.set_score()
         else:
