@@ -66,19 +66,17 @@ class TournamentManager(BaseManager):
     def enroll_player(self):
         """ Enroll a new player to the active tournament. """
         self.set_active_tournament(self.model.get_unready())
-        if self.active_tournament:
-            players = self.not_enrolled_players()
-            if players:
-                player = self.view.get_player(players, self.active_tournament)
-                self.active_tournament.enroll_player(player)
+        players = self.not_enrolled_players()
+        if players:
+            player = self.view.get_player(players, self.active_tournament)
+            self.active_tournament.enroll_player(player)
 
     def enter_results(self):
         self.set_active_tournament(self.model.get_unfinished())
-        if self.active_tournament:
-            active_match = self.active_tournament.get_active_match()
-            if active_match:
-                self.set_score(active_match, self.active_tournament)
-                self.active_tournament.save()
+        active_match = self.active_tournament.get_active_match()
+        if active_match:
+            self.set_score(active_match, self.active_tournament)
+            self.active_tournament.save()
 
     def set_score(self, match, tournament):
         players = [

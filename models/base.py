@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from dataclass_factory import Factory
 from tinydb import TinyDB
 from tinydb.table import Document
-
 from settings import DATABASE_NAME
 
 
@@ -25,7 +24,7 @@ class BaseModel(ABC):
         """ Return model's instance from database by its id"""
         data = cls._table().get(doc_id=id)
         if data:
-            instance = Factory().load(data, cls) # get_object from data
+            instance = Factory().load(data, cls)
             instance.id = id
             return instance
         return None

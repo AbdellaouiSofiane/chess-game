@@ -43,12 +43,8 @@ class PlayerView(BaseView):
         return input('Enter rank:\n')
 
     def display_players(self, players):
-        if players:
-            print('List of all registred players:')
-            self.display_objects(players)
-        else:
-            print('There is currently no registred player')
-
+        print('List of all registred players:')
+        self.display_objects(players)
         input('\nPress ENTER to continu\n') # avoid clearing interface
 
 
@@ -100,12 +96,9 @@ class TournamentView(BaseView):
         )
 
     def get_player(self, players, tournament):
-        if players:
-            print(f'Please select a player to enroll in {tournament.name}:\n')
-            obj = self.get_selected_object(players)
-            return obj
-        else:
-            print('No tournament was found:\n')
+        print(f'Please select a player to enroll in {tournament.name}:\n')
+        obj = self.get_selected_object(players)
+        return obj
 
     def set_score(self, players, tournament):
         print(f'{tournament}')
@@ -113,20 +106,13 @@ class TournamentView(BaseView):
         return self.get_selected_object(players)
 
     def get_active_tournament(self, tournaments):
-        if tournaments:
-            print('Please select a tournament from the list below:\n')
-            obj = self.get_selected_object(tournaments)
-            return obj
-        else:
-            print('No tournament was found:\n')
+        print('Please select a tournament from the list below:\n')
+        obj = self.get_selected_object(tournaments)
+        return obj
 
     def display_tournaments(self, tournaments):
-        if tournaments:
-            print('List of all registred tournaments:\n')
-            self.display_objects(tournaments)
-        else:
-            print('There is currently no registred tournament')
-
+        print('List of all registred tournaments:\n')
+        self.display_objects(tournaments)
         input('\nPress ENTER to continu\n') # avoid clearing interface
 
     def get_name(self):

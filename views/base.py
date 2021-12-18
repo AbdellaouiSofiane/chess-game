@@ -18,7 +18,7 @@ class BaseView(ABC):
     def menu(self):
         """ Return the menu list to be displayed in the interface"""
         return "\n".join(
-            f"\t{index}- {option.get('description')}"
+            f"\t[{index}] {option.get('description')}"
             for index, option in self.mapping.items()
         )
 

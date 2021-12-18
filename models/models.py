@@ -25,27 +25,33 @@ class Match(BaseModel):
 
     def __str__(self):
         if self.is_finished:
-            return f"{Player.get(self.player_1)}:{self.score_player_1} VS "\
-                   f"{Player.get(self.player_2)}:{self.score_player_2}"
+            return "%s:%s VS %s:%s" % (
+                Player.get(self.player_1),
+                self.score_player_1,
+                Player.get(self.player_2),
+                self.score_player_2
+            )
         else:
-            return f"{Player.get(self.player_1)} VS {Player.get(self.player_2)}"
+            return f"%s VS %s" % (
+                Player.get(self.player_1),
+                Player.get(self.player_2)
+            )
 
     @property
     def is_finished(self):
-        """ Return a boolean that indicate if the score has been
-            settled for this match.
+        """ Return a boolean that indicate if the score has been settled
+            for this match.
         """
         if self.score_player_1 + self.score_player_2 == 1:
             return True
         return False
 
     def set_score(self, winner=None):
-        """ Set score to 1 for winning player or 0.5 for both
-            players if draw.
+        """ Set score to 1 for winning player or 0.5 for both players
+            if draw.
         """
         if isinstance(winner, Player):
             winner = winner.id
-
         if winner == self.player_1:
             self.score_player_1, self.score_player_2 = 1, 0
         elif winner == self.player_2:
@@ -74,8 +80,8 @@ class Round(BaseModel):
 
     @property
     def is_finished(self):
-        """ Return a boolean that indicate if all matchs have been
-            settled for this round.
+        """ Return a boolean that indicate if all matchs have been settled
+            for this round.
         """
         if self.matchs and all(match.is_finished for match in self.matchs):
             return True
@@ -100,17 +106,25 @@ class Tournament(BaseModel):
 
     def __str__(self):
         if not self.is_ready:
-            return f"{self.name}, status: pending, {len(self.players)}/{self.nb_rounds * 2} players."
+            return "%s, status: pending, %s/%s." % (
+                self.name,
+                len(self.players),
+                self.nb_rounds * 2
+            )
         elif not self.is_finished:
-            return f"{self.name}, status: started, {len(self.rounds)}/{self.nb_rounds} rounds."
+            return "%s, status: started, %s/%s rounds." % (
+                self.name,
+                len(self.rounds),
+                self.nb_rounds
+            )
         else:
-            return f"{self.name}, status: finished."
+            return "%s, status: finished." % self.name
 
 
     @property
     def is_ready(self):
-        """ Return a boolean that indicate wether all players
-            have joined the tournament.
+        """ Return a boolean that indicate wether all players have joined
+            the tournament.
         """
         if len(self.players) == self.nb_rounds * 2:
             return True
@@ -118,8 +132,8 @@ class Tournament(BaseModel):
 
     @property
     def is_finished(self):
-        """ Return a boolean that indicate if all rounds has been
-            settled for this tournament.
+        """ Return a boolean that indicate if all rounds has been settled for
+            this tournament.
         """
         if (
             len(self.rounds) == self.nb_rounds and
@@ -129,7 +143,9 @@ class Tournament(BaseModel):
         return False
 
     def get_active_round(self):
-        """ Return the active round of a tournament"""
+        """ Return the active round of a tournament, generate a new round
+            if needed.
+        """
         if (
             not self.rounds or
             (
@@ -187,7 +203,9 @@ class Tournament(BaseModel):
             self.save()
 
     def total_score(self, player):
-        """ Return the cumulated score of a given player troughout the tournament. """
+        """ Return the cumulated score of a given player troughout the
+            tournament.
+        """
         return sum(
             match.get_score(player)
             for round in self.rounds
@@ -197,7 +215,10 @@ class Tournament(BaseModel):
     @classmethod
     def get_unready(cls):
         """ Return a list of all tournament which are not ready. """
-        return [tournament for tournament in cls.all() if not tournament.is_ready]
+        return [
+            tournament for tournament in cls.all()
+            if not tournament.is_ready
+        ]
 
     @classmethod
     def get_unfinished(cls):
