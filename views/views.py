@@ -18,6 +18,10 @@ class PlayerView(BaseView):
                     generator.__next__(): {
                         'description': 'Display all registred players',
                         'action': controller.show_all
+                    },
+                    generator.__next__(): {
+                        'description': 'Update players ranking',
+                        'action': controller.update_rank
                     }
                 }
             )
@@ -46,6 +50,12 @@ class PlayerView(BaseView):
         print('List of all registred players:')
         self.display_objects(players)
         input('\nPress ENTER to continu\n') # avoid clearing interface
+
+    def update_rank(self, players):
+        print('Select a player from the list below:\n')
+        obj = self.get_selected_object(players)
+        rank = input('Enter a new rank for the player:\n=>')
+        return obj, rank
 
 
 class TournamentView(BaseView):

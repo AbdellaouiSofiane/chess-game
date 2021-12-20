@@ -21,6 +21,11 @@ class PlayerManager(BaseManager):
         )
         player.save()
 
+    def update_rank(self):
+        player, new_rank = self.view.update_rank(self.model.all())
+        player.rank = new_rank
+        player.save()
+
     def show_all(self):
         """ Display all registred players in the interface. """
         self.view.display_players(self.model.all())
