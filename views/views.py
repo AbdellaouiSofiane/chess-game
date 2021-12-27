@@ -16,8 +16,12 @@ class PlayerView(BaseView):
             self.mapping.update(
                 {
                     generator.__next__(): {
-                        'description': 'Display all registred players',
-                        'action': controller.show_all
+                        'description': 'Display all registred players by rank',
+                        'action': controller.show_all_by_rank
+                    },
+                    generator.__next__(): {
+                        'description': 'Display all registred players by alphabetical order',
+                        'action': controller.show_all_by_name
                     },
                     generator.__next__(): {
                         'description': 'Update players ranking',
@@ -28,7 +32,7 @@ class PlayerView(BaseView):
         self.mapping.update(
             {
                 generator.__next__(): {
-                    'description':'Back',
+                    'description': 'Back',
                     'action': controller.back
                 }
             }
@@ -49,7 +53,7 @@ class PlayerView(BaseView):
     def display_players(self, players):
         print('List of all registred players:')
         self.display_objects(players)
-        input('\nPress ENTER to continu\n') # avoid clearing interface
+        input('\nPress ENTER to continu\n')  # avoid clearing interface
 
     def update_rank(self, players):
         print('Select a player from the list below:\n')
@@ -64,7 +68,7 @@ class TournamentView(BaseView):
         generator = index_generator()
         self.mapping = {
             generator.__next__(): {
-                'description':'Create new tournament',
+                'description': 'Create new tournament',
                 'action': controller.create
             }
         }
@@ -72,7 +76,7 @@ class TournamentView(BaseView):
             self.mapping.update(
                 {
                     generator.__next__(): {
-                        'description':'Enroll player to tournament',
+                        'description': 'Enroll player to tournament',
                         'action': controller.enroll_player
                     }
                 }
@@ -81,8 +85,21 @@ class TournamentView(BaseView):
             self.mapping.update(
                 {
                     generator.__next__(): {
-                        'description':'Enter results',
+                        'description': 'Enter match results',
                         'action': controller.enter_results
+                    }
+                }
+            )
+        if controller.model.get_ready():
+            self.mapping.update(
+                {
+                    generator.__next__(): {
+                        'description': 'Display players score',
+                        'action': controller.display_results
+                    },
+                    generator.__next__(): {
+                        'description': 'Display tournament report',
+                        'action': controller.display_report
                     }
                 }
             )
@@ -90,7 +107,7 @@ class TournamentView(BaseView):
             self.mapping.update(
                 {
                     generator.__next__(): {
-                        'description':'Display all tournament',
+                        'description': 'Display all tournament',
                         'action': controller.show_all
                     }
                 }
@@ -98,7 +115,7 @@ class TournamentView(BaseView):
         self.mapping.update(
             {
                 generator.__next__(): {
-                    'description':'Back',
+                    'description': 'Back',
                     'action': controller.back
                 },
 
@@ -111,8 +128,9 @@ class TournamentView(BaseView):
         return obj
 
     def set_score(self, players, tournament):
-        print(f'{tournament}')
-        print(f'Please select the winner of the match {tournament.get_active_match()}:\n')
+        print(f'tournament: {tournament}')
+        print(f'match: {tournament.get_active_match()}')
+        print('Please select the winner of the match:\n')
         return self.get_selected_object(players)
 
     def get_active_tournament(self, tournaments):
@@ -123,7 +141,21 @@ class TournamentView(BaseView):
     def display_tournaments(self, tournaments):
         print('List of all registred tournaments:\n')
         self.display_objects(tournaments)
-        input('\nPress ENTER to continu\n') # avoid clearing interface
+        input('\nPress ENTER to continu\n')  # avoid clearing interface
+
+    def display_results(self, players, tournament):
+        print(f'Results for tournament {tournament}:\n')
+        for player in players:
+            print(f'\t[{player}]: {tournament.total_score(player)}')
+        input('\nPress ENTER to continu\n')  # avoid clearing interface
+
+    def display_report(self, tournament):
+        print(f'Report for tournament {tournament}:\n')
+        for round in tournament.rounds:
+            print(f'\t{round}')
+            for match in round.matchs:
+                print(f'\t\t{match}')
+        input('\nPress ENTER to continu\n')  # avoid clearing interface
 
     def get_name(self):
         return input('Enter a name for the new tournament:\n')
@@ -135,15 +167,15 @@ class AppView(BaseView):
         generator = index_generator()
         self.mapping = {
             generator.__next__(): {
-                'description':'Manage tournaments',
+                'description': 'Manage tournaments',
                 'action': controller.lunch_tournament_manager
             },
             generator.__next__(): {
-                'description':'Manage players',
+                'description': 'Manage players',
                 'action': controller.lunch_player_manager
             },
             generator.__next__(): {
-                'description':'Exit program',
+                'description': 'Exit program',
                 'action': controller.exit
             }
         }

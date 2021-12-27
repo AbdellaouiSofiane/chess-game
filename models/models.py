@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
-from typing import List, ClassVar
+from typing import List
 from .base import BaseModel
 
 
@@ -8,12 +7,12 @@ from .base import BaseModel
 class Player(BaseModel):
     first_name: str
     last_name: str
-    #birth_day: date
+    # birth_day: date
     sexe: str
     rank: int
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} (rank {self.rank})"
+        return f"{self.first_name} {self.last_name}"
 
 
 @dataclass
@@ -24,18 +23,12 @@ class Match(BaseModel):
     score_player_2: float = 0
 
     def __str__(self):
-        if self.is_finished:
-            return "%s:%s VS %s:%s" % (
-                Player.get(self.player_1),
-                self.score_player_1,
-                Player.get(self.player_2),
-                self.score_player_2
-            )
-        else:
-            return f"%s VS %s" % (
-                Player.get(self.player_1),
-                Player.get(self.player_2)
-            )
+        return "%s: %s VS %s: %s" % (
+            Player.get(self.player_1),
+            self.score_player_1,
+            Player.get(self.player_2),
+            self.score_player_2
+        )
 
     @property
     def is_finished(self):
@@ -106,20 +99,19 @@ class Tournament(BaseModel):
 
     def __str__(self):
         if not self.is_ready:
-            return "%s, status: pending, %s/%s." % (
+            return "%s (%s/%s) players" % (
                 self.name,
                 len(self.players),
                 self.nb_rounds * 2
             )
         elif not self.is_finished:
-            return "%s, status: started, %s/%s rounds." % (
+            return "%s (%s/%s rounds)" % (
                 self.name,
                 len(self.rounds),
                 self.nb_rounds
             )
         else:
-            return "%s, status: finished." % self.name
-
+            return "%s (finished)" % self.name
 
     @property
     def is_ready(self):
@@ -149,7 +141,7 @@ class Tournament(BaseModel):
         if (
             not self.rounds or
             (
-                self.rounds[-1].is_finished and 
+                self.rounds[-1].is_finished and
                 len(self.rounds) < self.nb_rounds
             )
         ):
@@ -157,7 +149,7 @@ class Tournament(BaseModel):
         if not self.rounds[-1].is_finished:
             return self.rounds[-1]
         return None
-                    
+
     def get_active_match(self):
         """ Return the active match of a tournament"""
         active_round = self.get_active_round()
@@ -187,7 +179,7 @@ class Tournament(BaseModel):
                 for i in range(self.nb_rounds)
             ]
         self.rounds.append(
-            Round(index=len(self.rounds)+1, matchs=match_list)
+            Round(index=len(self.rounds) + 1, matchs=match_list)
         )
         self.save()
 
@@ -211,6 +203,14 @@ class Tournament(BaseModel):
             for round in self.rounds
             for match in round.matchs
         )
+
+    @classmethod
+    def get_ready(cls):
+        """ Return a list of all tournament which are not ready. """
+        return [
+            tournament for tournament in cls.all()
+            if tournament.is_ready
+        ]
 
     @classmethod
     def get_unready(cls):

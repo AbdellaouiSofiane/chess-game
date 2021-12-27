@@ -26,9 +26,15 @@ class PlayerManager(BaseManager):
         player.rank = new_rank
         player.save()
 
-    def show_all(self):
-        """ Display all registred players in the interface. """
-        self.view.display_players(self.model.all())
+    def show_all_by_rank(self):
+        """ Display all registred players in the interface ordered by rank. """
+        players = sorted(self.model.all(), key=lambda x: x.rank)
+        self.view.display_players(players)
+
+    def show_all_by_name(self):
+        """ Display all registred players in the interface in alphabetical order. """
+        players = sorted(self.model.all(), key=lambda x: (x.first_name, x.last_name))
+        self.view.display_players(players)
 
     def back(self):
         """ Go back to App manager. """
@@ -57,8 +63,8 @@ class TournamentManager(BaseManager):
         ]
 
     def set_active_tournament(self, tournaments):
-        """ set active_tournament class attribute to the tournament 
-            given as args, if multiple tournament given then ask user to
+        """ set active_tournament class attribute to the tournament given
+            as args, if multiple tournament given then ask user to
             choose one.
         """
         if len(tournaments) == 1:
@@ -82,6 +88,18 @@ class TournamentManager(BaseManager):
         if active_match:
             self.set_score(active_match, self.active_tournament)
             self.active_tournament.save()
+
+    def display_results(self):
+        self.set_active_tournament(self.model.get_ready())
+        players = [
+            Player.get(player)
+            for player in self.active_tournament.get_sorted_players()
+        ]
+        self.view.display_results(players, self.active_tournament)
+
+    def display_report(self):
+        self.set_active_tournament(self.model.get_ready())
+        self.view.display_report(self.active_tournament)
 
     def set_score(self, match, tournament):
         players = [
@@ -109,7 +127,7 @@ class AppManager(BaseManager):
         exit()
 
     def lunch_player_manager(self):
-        PlayerManager(model=Player , view=PlayerView()).start()
+        PlayerManager(model=Player, view=PlayerView()).start()
 
     def lunch_tournament_manager(self):
         TournamentManager(model=Tournament, view=TournamentView()).start()

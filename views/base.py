@@ -25,7 +25,7 @@ class BaseView(ABC):
     def start(self):
         """ Display the view's menu and get customer choice."""
         user_choice = input(
-            f"Select an action from the menu:\n" +
+            "Select an action from the menu:\n" +
             f"{self.menu}\n"
             + "=> "
         )
@@ -42,7 +42,7 @@ class BaseView(ABC):
 
     def clear(self):
         """ Clear user interface"""
-        os.system('cls' if os.name=='nt' else 'clear')
+        os.system('cls' if os.name == 'nt' else 'clear')
 
     def display_objects(self, objects_list):
         """ print an enumerated list of objects."""
