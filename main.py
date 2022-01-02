@@ -15,5 +15,6 @@ GREETING_MESSAGE = """
 
 if __name__ == '__main__':
     print(GREETING_MESSAGE)
+    input('Press ENTER to continu')
     app = AppManager(model=None, view=AppView())
     app.start()
