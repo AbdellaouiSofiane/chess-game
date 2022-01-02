@@ -44,6 +44,9 @@ class PlayerView(BaseView):
     def get_last_name(self):
         return input('Enter last name:\n')
 
+    def get_birth_date(self):
+        return input('Enter birth date (format dd/mm/yyyy):\n')
+
     def get_sexe(self):
         return input('Enter sexe:\n')
 

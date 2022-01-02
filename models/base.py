@@ -1,12 +1,22 @@
 from abc import ABC
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from dataclass_factory import Factory
+from dataclass_factory import Schema, Factory
 from tinydb import TinyDB
 from tinydb.table import Document
 from settings import DATABASE_NAME
 
 
 db = TinyDB(DATABASE_NAME)
+
+factory = Factory(
+    schemas={
+        datetime: Schema(
+            parser=lambda t: datetime.fromtimestamp(t, tz=timezone.utc),
+            serializer=datetime.timestamp
+        ),
+    }
+)
 
 
 @dataclass
@@ -24,7 +34,7 @@ class BaseModel(ABC):
         """ Return model's instance from database by its id"""
         data = cls._table().get(doc_id=id)
         if data:
-            instance = Factory().load(data, cls)
+            instance = factory.load(data, cls)
             instance.id = id
             return instance
         return None
@@ -37,7 +47,7 @@ class BaseModel(ABC):
     @property
     def dict(self):
         """ Return model's attributes as dict"""
-        return Factory().dump(self)
+        return factory.dump(self)
 
     def save(self):
         """ Create a new database entry or update an existing one"""

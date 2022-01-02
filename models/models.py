@@ -1,5 +1,6 @@
+from datetime import datetime
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 from .base import BaseModel
 
 
@@ -7,7 +8,7 @@ from .base import BaseModel
 class Player(BaseModel):
     first_name: str
     last_name: str
-    # birth_day: date
+    birth_date: datetime
     sexe: str
     rank: int
 
@@ -67,6 +68,8 @@ class Match(BaseModel):
 class Round(BaseModel):
     index: int
     matchs: List[Match] = field(default_factory=list)
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
 
     def __str__(self):
         return f"Round {self.index}"
@@ -96,6 +99,7 @@ class Tournament(BaseModel):
     nb_rounds: int = 4
     players: List[int] = field(default_factory=list)
     rounds: List[Round] = field(default_factory=list)
+    start_date: Optional[datetime] = None
 
     def __str__(self):
         if not self.is_ready:
@@ -169,17 +173,19 @@ class Tournament(BaseModel):
         """ Generate a new round and match players together. """
         players = self.get_sorted_players()
         if not self.rounds:
+            self.start_date = datetime.now()
             match_list = [
                 Match(players[i], players[i + self.nb_rounds])
                 for i in range(self.nb_rounds)
             ]
         else:
+            self.rounds[-1].end_date = datetime.now()
             match_list = [
                 Match(players[i * 2], players[i * 2 + 1])
                 for i in range(self.nb_rounds)
             ]
         self.rounds.append(
-            Round(index=len(self.rounds) + 1, matchs=match_list)
+            Round(index=len(self.rounds) + 1, start_date=datetime.now(), matchs=match_list)
         )
         self.save()
 

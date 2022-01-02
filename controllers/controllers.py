@@ -1,5 +1,5 @@
+from datetime import datetime
 from sys import exit
-from dataclass_factory import Factory
 from models import Player, Tournament
 from views import AppView, PlayerView, TournamentView
 from .base import BaseManager
@@ -10,14 +10,16 @@ class PlayerManager(BaseManager):
 
     def create(self):
         """ Create and save a new player. """
-        player = Factory().load(
-            {
+        player = self.model(
+            **{
                 'first_name': self.view.get_first_name(),
                 'last_name': self.view.get_last_name(),
+                'birth_date': datetime.strptime(
+                    self.view.get_birth_date(), "%d/%m/%Y"
+                ),
                 'sexe': self.view.get_sexe(),
                 'rank': self.view.get_rank()
-            },
-            self.model
+            }
         )
         player.save()
 
@@ -45,12 +47,7 @@ class TournamentManager(BaseManager):
 
     def create(self):
         """ Create and save a new tournament """
-        tournament = Factory().load(
-            {
-                'name': self.view.get_name()
-            },
-            self.model
-        )
+        tournament = self.model(**{'name': self.view.get_name()})
         tournament.save()
 
     def not_enrolled_players(self):
